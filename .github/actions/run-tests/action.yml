@@ -5,5 +5,5 @@ runs:
   using: 'composite'
   steps:
     - name: Run shellcheck
-      run: shellcheck usr/libexec/halos/*.sh
+      run: shellcheck debian/postinst debian/postrm
       shell: bash
