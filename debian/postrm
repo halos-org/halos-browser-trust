@@ -1,0 +1,20 @@
+#!/bin/sh
+set -e
+
+# Restore libnss3's real module on removal. Guarded so a purge after remove is a
+# no-op (once restored, lib is a regular file again, not our symlink).
+
+lib=/usr/lib/aarch64-linux-gnu/libnssckbi.so
+
+case "$1" in
+    remove|purge)
+        if [ -L "$lib" ] && [ -e "${lib}.distrib" ]; then
+            rm -f "$lib"
+            mv -f "${lib}.distrib" "$lib"
+        fi
+        ;;
+esac
+
+#DEBHELPER#
+
+exit 0

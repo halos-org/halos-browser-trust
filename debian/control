@@ -1,0 +1,23 @@
+Source: halos-browser-trust
+Section: misc
+Priority: optional
+Maintainer: Matti Airas <matti.airas@hatlabs.fi>
+Build-Depends: debhelper-compat (= 13)
+Standards-Version: 4.6.2
+Homepage: https://github.com/halos-org/halos-browser-trust
+Rules-Requires-Root: no
+
+Package: halos-browser-trust
+Architecture: all
+Depends: ${misc:Depends}, libnss3, p11-kit-modules
+Description: Make NSS applications trust the system CA store
+ Bridges NSS to the system p11-kit trust store by diverting libnssckbi.so to
+ p11-kit-trust.so, the standard mechanism Fedora and Arch enable by default but
+ Debian omits.
+ .
+ Without this, NSS-based applications (Chromium, Firefox) on a HaLOS desktop
+ trust only the static Mozilla root bundle and ignore CAs installed into the
+ system trust store via update-ca-certificates. With it, the on-device browser
+ trusts the device's own auto-CA (and any operator-installed CA) with no manual
+ per-user steps. Pulled in by the halos-desktop metapackage, so it lands only on
+ desktop variants.

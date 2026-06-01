@@ -1,0 +1,24 @@
+name: Main Branch CI/CD
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+concurrency:
+  group: ${{ github.repository }}-main-release
+  cancel-in-progress: false
+
+permissions:
+  contents: write
+
+jobs:
+  build-release:
+    uses: halos-org/shared-workflows/.github/workflows/build-release.yml@main
+    with:
+      package-name: halos-browser-trust
+      package-description: 'Make NSS applications trust the system CA store'
+      apt-distro: trixie
+      apt-component: main
+    secrets:
+      APT_REPO_PAT: ${{ secrets.APT_REPO_PAT }}
