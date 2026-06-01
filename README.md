@@ -10,11 +10,16 @@ Fedora and Arch ship `libnssckbi.so` as a symlink to `p11-kit-trust.so`, which e
 
 ## How it works
 
-On install, the package replaces `/usr/lib/<triplet>/libnssckbi.so` with a symlink to `p11-kit-trust.so` (preserving the original as `.distrib`). NSS applications then trust everything in the system p11-kit store: the Mozilla roots (from `ca-certificates`) plus any CA installed via `update-ca-certificates`.
+Two browser families resolve trust differently, so the package handles each:
+
+**Chromium and other system-NSS apps.** On install, the package replaces `/usr/lib/<triplet>/libnssckbi.so` with a symlink to `p11-kit-trust.so` (preserving the original as `.distrib`). NSS then trusts everything in the system p11-kit store: the Mozilla roots (from `ca-certificates`) plus any CA installed via `update-ca-certificates`.
 
 - A dpkg file trigger on the `libnssckbi.so` path re-asserts the symlink whenever `libnss3` is upgraded, so the bridge self-heals across NSS updates.
-- Tracks CA rotation for free — no per-user `nssdb`, no resync.
 - Purge/remove restores stock NSS trust.
+
+**Firefox.** Firefox bundles its own NSS and root store and ignores the system `libnssckbi.so`, so the package ships a Firefox enterprise policy (`/etc/firefox/policies/policies.json`) that installs the system CA file directly — Mozilla's documented Linux mechanism.
+
+Both point at the same CA file `halos-manage-certs` maintains, so trust tracks CA rotation with no per-user state.
 
 ## Part of HaLOS
 
