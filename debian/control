@@ -10,14 +10,18 @@ Rules-Requires-Root: no
 Package: halos-browser-trust
 Architecture: all
 Depends: ${misc:Depends}, libnss3, p11-kit-modules
-Description: Make NSS applications trust the system CA store
- Bridges NSS to the system p11-kit trust store by diverting libnssckbi.so to
- p11-kit-trust.so, the standard mechanism Fedora and Arch enable by default but
- Debian omits.
+Description: Make on-device browsers trust the system CA store
+ So Chromium, Firefox and other NSS applications on a HaLOS desktop trust CAs
+ installed via update-ca-certificates — notably the device's own auto-CA — with
+ no manual per-user steps.
  .
- Without this, NSS-based applications (Chromium, Firefox) on a HaLOS desktop
- trust only the static Mozilla root bundle and ignore CAs installed into the
- system trust store via update-ca-certificates. With it, the on-device browser
- trusts the device's own auto-CA (and any operator-installed CA) with no manual
- per-user steps. Pulled in by the halos-desktop metapackage, so it lands only on
- desktop variants.
+ Chromium and other system-NSS apps: replaces libnss3's libnssckbi.so with a
+ symlink to p11-kit-trust.so (re-asserted via a dpkg trigger so it survives
+ libnss3 upgrades), exposing the system p11-kit trust store the way Fedora and
+ Arch do by default but Debian omits.
+ .
+ Firefox bundles its own NSS and root store, so a Firefox enterprise policy at
+ /etc/firefox/policies/policies.json installs the system CA file instead.
+ .
+ Pulled in by the halos-desktop metapackage, so it lands only on desktop
+ variants.

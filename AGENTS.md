@@ -2,10 +2,13 @@
 
 ## Repository Purpose
 
-Debian package that bridges NSS to the system p11-kit trust store, so NSS-based
-applications (Chromium, Firefox) on a HaLOS desktop trust CAs installed via
-`update-ca-certificates` — most importantly the device's own auto-CA. Ships no
-files; the maintainer scripts divert `libnssckbi.so` to `p11-kit-trust.so`.
+Debian package that makes on-device browsers on a HaLOS desktop trust CAs
+installed via `update-ca-certificates` — most importantly the device's own
+auto-CA. Two mechanisms, because the two browser families resolve trust
+differently:
+- **Chromium / system-NSS apps:** bridge `libnssckbi.so` → `p11-kit-trust.so`.
+- **Firefox:** bundles its own NSS/root store, so an enterprise policy installs
+  the system CA file instead.
 
 ## Background
 
@@ -44,15 +47,30 @@ Work from the halos workspace repository for full context across all HaLOS repos
    verified on-device).
 3. `debian/postrm` (`remove`/`purge`) restores stock NSS by renaming `.distrib`
    back, guarded so a `purge` after `remove` is a no-op.
-4. HaLOS is arm64-only, so the multiarch path is hardcoded; the package ships no
-   files (only maintainer scripts + trigger), keeping it `Architecture: all`.
+4. HaLOS is arm64-only, so the multiarch path is hardcoded. The only shipped
+   file is the Firefox policy (below); everything else is maintainer scripts +
+   trigger, so the package stays `Architecture: all`.
+
+### Firefox
+
+Firefox does not use the system `libnssckbi.so` — it bundles its own NSS and
+root store — so the bridge above does not reach it. The package ships
+`/etc/firefox/policies/policies.json` with `Certificates.Install` pointing at
+the system CA file (`/usr/local/share/ca-certificates/halos-ca.crt`, maintained
+by `halos-manage-certs`), which Firefox reads at startup. This is Mozilla's
+documented Linux mechanism — `Certificates.ImportEnterpriseRoots` is
+Windows/macOS-oriented and does not read the system store on Linux (verified
+on-device). Because the policy points at the CA *file*, it tracks rotation with
+no per-user state.
 
 ## Verification
 
 Verify with a real on-device browser, not `curl`/`openssl` — those use the system
-store and would mask a browser-side failure. The canonical check is headless
-Chromium against `https://<device>.local/`: stock NSS yields a cert error,
-the bridge yields a clean page load.
+store and would mask a browser-side failure. Check **both** families:
+- Chromium: headless `--dump-dom https://<device>.local/` loads the dashboard.
+- Firefox: headless `--screenshot` of a static device page (e.g. `/ca/`) renders
+  instead of hanging on the cert-error interstitial.
+Stock (no package) yields a cert error in both.
 
 ## Version Management
 
