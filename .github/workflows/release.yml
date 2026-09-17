@@ -6,7 +6,7 @@ on:
 
 jobs:
   apt-publish:
-    uses: halos-org/shared-workflows/.github/workflows/apt-publish.yml@896feffd8444e354e1baef9b0b5f23e1b1d13a85 # feat/v1-release-pipeline
+    uses: halos-org/shared-workflows/.github/workflows/apt-publish.yml@8e0a559ed3cd1307b35b103579ee2fd5633e40d3 # feat/v1-release-pipeline
     with:
       channel: stable
       apt-repository: halos-org/apt.halos.fi
