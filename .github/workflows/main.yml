@@ -25,11 +25,11 @@ jobs:
 
   version:
     needs: tests
-    uses: halos-org/shared-workflows/.github/workflows/release-version.yml@380f7729bbacab699ae89dfd5296eaaafcb9afcb # v1 candidate
+    uses: halos-org/shared-workflows/.github/workflows/release-version.yml@v1.0.0-rc.1
 
   build-deb:
     needs: version
-    uses: halos-org/shared-workflows/.github/workflows/build-deb.yml@380f7729bbacab699ae89dfd5296eaaafcb9afcb # v1 candidate
+    uses: halos-org/shared-workflows/.github/workflows/build-deb.yml@v1.0.0-rc.1
     with:
       package-name: halos-browser-trust
       upstream-version: ${{ needs.version.outputs.upstream-version }}
@@ -43,7 +43,7 @@ jobs:
     needs: [version, build-deb]
     permissions:
       contents: write
-    uses: halos-org/shared-workflows/.github/workflows/stage-release.yml@380f7729bbacab699ae89dfd5296eaaafcb9afcb # v1 candidate
+    uses: halos-org/shared-workflows/.github/workflows/stage-release.yml@v1.0.0-rc.1
     with:
       package-name: halos-browser-trust
       package-description: Make NSS applications trust the system CA store
@@ -57,7 +57,7 @@ jobs:
 
   apt-publish:
     needs: [version, stage-release]
-    uses: halos-org/shared-workflows/.github/workflows/apt-publish.yml@380f7729bbacab699ae89dfd5296eaaafcb9afcb # v1 candidate
+    uses: halos-org/shared-workflows/.github/workflows/apt-publish.yml@v1.0.0-rc.1
     with:
       channel: unstable
       prerelease-tag: ${{ needs.version.outputs.prerelease-tag }}
