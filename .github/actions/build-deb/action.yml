@@ -16,5 +16,3 @@ runs:
         dpkg-buildpackage -b -uc -us
         mkdir -p build
         mv ../*.deb build/
-        printf 'not a debian package\n' > bogus.deb
-        ls -l build/ bogus.deb
