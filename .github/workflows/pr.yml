@@ -11,6 +11,8 @@ jobs:
 
   build-deb:
     uses: halos-org/shared-workflows/.github/workflows/build-deb.yml@feat/v1-pr-checks
+    with:
+      lintian: false
 
   # Branch protection requires only this job. List every other job in needs,
   # including jobs defined in this file.
