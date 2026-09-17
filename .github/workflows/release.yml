@@ -9,7 +9,7 @@ permissions:
 
 jobs:
   apt-publish:
-    uses: halos-org/shared-workflows/.github/workflows/apt-publish.yml@380f7729bbacab699ae89dfd5296eaaafcb9afcb # v1 candidate
+    uses: halos-org/shared-workflows/.github/workflows/apt-publish.yml@v1.0.0-rc.1
     with:
       channel: stable
       apt-repository: halos-org/apt.halos.fi
