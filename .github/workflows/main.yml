@@ -13,11 +13,49 @@ permissions:
   contents: write
 
 jobs:
-  build-release:
-    uses: halos-org/shared-workflows/.github/workflows/build-release.yml@main
+  tests:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: ./.github/actions/run-tests
+
+  version:
+    needs: tests
+    uses: halos-org/shared-workflows/.github/workflows/release-version.yml@896feffd8444e354e1baef9b0b5f23e1b1d13a85 # feat/v1-release-pipeline
+
+  build-deb:
+    needs: version
+    if: needs.version.outputs.due == 'true'
+    uses: halos-org/shared-workflows/.github/workflows/build-deb.yml@896feffd8444e354e1baef9b0b5f23e1b1d13a85 # feat/v1-release-pipeline
     with:
       package-name: halos-browser-trust
-      package-description: 'Make NSS applications trust the system CA store'
+      upstream-version: ${{ needs.version.outputs.upstream-version }}
+      revision: ${{ needs.version.outputs.revision }}
+      apt-distro: trixie
+      apt-component: main
+
+  stage-release:
+    needs: [version, build-deb]
+    uses: halos-org/shared-workflows/.github/workflows/stage-release.yml@896feffd8444e354e1baef9b0b5f23e1b1d13a85 # feat/v1-release-pipeline
+    with:
+      package-name: halos-browser-trust
+      package-description: Make NSS applications trust the system CA store
+      debian-version: ${{ needs.version.outputs.debian-version }}
+      prerelease-tag: ${{ needs.version.outputs.prerelease-tag }}
+      stable-tag: ${{ needs.version.outputs.stable-tag }}
+      artifact: ${{ needs.build-deb.outputs.artifact }}
+      apt-repository: halos-org/apt.halos.fi
+      apt-distro: trixie
+      apt-component: main
+
+  apt-publish:
+    needs: stage-release
+    uses: halos-org/shared-workflows/.github/workflows/apt-publish.yml@896feffd8444e354e1baef9b0b5f23e1b1d13a85 # feat/v1-release-pipeline
+    with:
+      channel: unstable
+      apt-repository: halos-org/apt.halos.fi
       apt-distro: trixie
       apt-component: main
     secrets:

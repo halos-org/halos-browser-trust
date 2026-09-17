@@ -4,13 +4,12 @@ on:
   release:
     types: [published]
 
-permissions:
-  contents: write
-
 jobs:
-  publish:
-    uses: halos-org/shared-workflows/.github/workflows/publish-stable.yml@main
+  apt-publish:
+    uses: halos-org/shared-workflows/.github/workflows/apt-publish.yml@896feffd8444e354e1baef9b0b5f23e1b1d13a85 # feat/v1-release-pipeline
     with:
+      channel: stable
+      apt-repository: halos-org/apt.halos.fi
       apt-distro: trixie
       apt-component: main
     secrets:
