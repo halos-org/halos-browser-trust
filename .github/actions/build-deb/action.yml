@@ -1,5 +1,5 @@
 name: 'Build Debian Package'
-description: 'Build .deb package using native dpkg tools'
+description: 'Canary: package in build/, plus an invalid .deb in the root'
 
 runs:
   using: 'composite'
@@ -14,6 +14,7 @@ runs:
       shell: bash
       run: |
         dpkg-buildpackage -b -uc -us
-        mv ../*.deb ./
-        echo "Built packages:"
-        ls -lh *.deb
+        mkdir -p build
+        mv ../*.deb build/
+        printf 'not a debian package\n' > bogus.deb
+        ls -l build/ bogus.deb
