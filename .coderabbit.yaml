@@ -1,0 +1,94 @@
+# yaml-language-server: $schema=https://storage.googleapis.com/coderabbit_public_assets/schema.v2.json
+language: en-US
+
+# Under 250 characters, the schema's limit.
+tone_instructions: >-
+  Name the trigger, the code path, and the consequence on a HaLOS device for
+  every finding. If you cannot name one, do not raise it. No praise, no
+  preamble, no restating the diff.
+
+reviews:
+  profile: assertive
+  poem: false
+  in_progress_fortune: false
+
+  auto_review:
+    enabled: true
+    drafts: false
+
+  high_level_summary_instructions: |
+    Write in present tense. Lead with what changes on an installed device,
+    not with the file list. Do not restate the PR description.
+
+  pre_merge_checks:
+    # Quoted: bare `off` is a YAML 1.1 boolean, and this field takes a string.
+    docstrings:
+      mode: "off"
+    description:
+      mode: "off"
+
+  tools:
+    markdownlint:
+      enabled: false
+    languagetool:
+      enabled: false
+
+  path_instructions:
+    - path: "**/*"
+      instructions: |
+        ## What this is
+        A Debian package that makes on-device browsers on a HaLOS desktop
+        trust CAs installed with `update-ca-certificates`. AGENTS.md explains
+        both mechanisms and why each design choice was made; flag a change
+        that contradicts it.
+
+        ## Privacy
+        This repository is public. Flag any internal hostname, address or
+        network detail. Placeholders such as `<device>.local` only.
+
+        ## Do not ask for these
+        - A manual edit of `VERSION` or `debian/changelog`. `./run
+          bumpversion` owns `VERSION`, and CI regenerates the changelog on
+          every build from main.
+        - Whether `VERSION` was bumped at all; `version-bump-check` enforces
+          that. Do flag a change whose semver level is higher than the bump
+          that opened the current release cycle, which CI cannot see.
+        - A test that uses `curl` or `openssl` to prove browser trust. They
+          read the system store and pass when a browser still fails; AGENTS.md
+          requires a real Chromium and Firefox on a device.
+
+    - path: "debian/{postinst,postrm,triggers}"
+      instructions: |
+        These run as root inside dpkg transactions on every device.
+
+        The bridge must point at `p11-kit-trust.so`, never
+        `p11-kit-proxy.so`, which breaks Firefox HTTPS. Do not suggest
+        `dpkg-divert`: on a libnss3 re-unpack its renamed file flips the
+        symlink to `.distrib`, which is why the package uses an
+        `interest-noawait` trigger instead.
+
+        The `aarch64-linux-gnu` path is hardcoded on purpose, because HaLOS
+        is arm64-only. Do not ask for multiarch detection.
+
+        Check each handled action (`configure` and `triggered` in postinst,
+        `remove` and `purge` in postrm) for what happens when it runs twice,
+        runs after a partial failure, or runs when libnss3 is absent. The
+        other actions are no-ops on purpose: the package has no preinst or
+        prerm, so there is nothing to undo. A `purge` after `remove` must be
+        a no-op. A failure here leaves the device's NSS without its root
+        module, so flag any path that can delete `libnssckbi.so.distrib`
+        before the real module is back in place.
+
+    - path: "etc/firefox/policies/policies.json"
+      instructions: |
+        Firefox's enterprise policy. `Certificates.Install` points at the CA
+        file that halos-core-containers' `halos-manage-certs` maintains, so
+        rotation needs no per-user state. Do not suggest
+        `Certificates.ImportEnterpriseRoots`; it does not read the Linux
+        system store.
+
+knowledge_base:
+  code_guidelines:
+    enabled: true
+    filePatterns:
+      - AGENTS.md
