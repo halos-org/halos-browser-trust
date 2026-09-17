@@ -5,12 +5,14 @@ on:
     branches: [main]
   workflow_dispatch:
 
+# Required: release-version.yml computes the next revision from existing tags,
+# so two concurrent runs would compute the same one.
 concurrency:
   group: ${{ github.repository }}-main-release
   cancel-in-progress: false
 
 permissions:
-  contents: write
+  contents: read
 
 jobs:
   tests:
@@ -23,22 +25,25 @@ jobs:
 
   version:
     needs: tests
-    uses: halos-org/shared-workflows/.github/workflows/release-version.yml@8e0a559ed3cd1307b35b103579ee2fd5633e40d3 # feat/v1-release-pipeline
+    uses: halos-org/shared-workflows/.github/workflows/release-version.yml@380f7729bbacab699ae89dfd5296eaaafcb9afcb # v1 candidate
 
   build-deb:
     needs: version
-    if: needs.version.outputs.due == 'true'
-    uses: halos-org/shared-workflows/.github/workflows/build-deb.yml@8e0a559ed3cd1307b35b103579ee2fd5633e40d3 # feat/v1-release-pipeline
+    uses: halos-org/shared-workflows/.github/workflows/build-deb.yml@380f7729bbacab699ae89dfd5296eaaafcb9afcb # v1 candidate
     with:
       package-name: halos-browser-trust
       upstream-version: ${{ needs.version.outputs.upstream-version }}
       revision: ${{ needs.version.outputs.revision }}
       apt-distro: trixie
       apt-component: main
+      maintainer-name: Hat Labs Oy
+      maintainer-email: info@hatlabs.fi
 
   stage-release:
     needs: [version, build-deb]
-    uses: halos-org/shared-workflows/.github/workflows/stage-release.yml@8e0a559ed3cd1307b35b103579ee2fd5633e40d3 # feat/v1-release-pipeline
+    permissions:
+      contents: write
+    uses: halos-org/shared-workflows/.github/workflows/stage-release.yml@380f7729bbacab699ae89dfd5296eaaafcb9afcb # v1 candidate
     with:
       package-name: halos-browser-trust
       package-description: Make NSS applications trust the system CA store
@@ -51,10 +56,11 @@ jobs:
       apt-component: main
 
   apt-publish:
-    needs: stage-release
-    uses: halos-org/shared-workflows/.github/workflows/apt-publish.yml@8e0a559ed3cd1307b35b103579ee2fd5633e40d3 # feat/v1-release-pipeline
+    needs: [version, stage-release]
+    uses: halos-org/shared-workflows/.github/workflows/apt-publish.yml@380f7729bbacab699ae89dfd5296eaaafcb9afcb # v1 candidate
     with:
       channel: unstable
+      prerelease-tag: ${{ needs.version.outputs.prerelease-tag }}
       apt-repository: halos-org/apt.halos.fi
       apt-distro: trixie
       apt-component: main
